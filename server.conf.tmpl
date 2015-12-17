@@ -29,21 +29,28 @@ server {
 {{ end }}
 
   location / {
-    proxy_http_version          1.1;
-    proxy_buffering             off;
-    proxy_redirect              off;
-    proxy_pass_request_headers  on;
-    proxy_cache                 off;
+      proxy_pass http://app;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header Host $host;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 
-    proxy_set_header Host $proxy_host;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection $proxy_connection;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
-    proxy_set_header X-Forwarded-Host $proxy_host;
+      proxy_set_header X-NginX-Proxy true;
+  }
 
-    proxy_pass http://app;
+  location ~* /(user[-/][a-zA-Z0-9]*)/(api/kernels/[^/]+/(channels|iopub|shell|stdin)|terminals/websocket)/? {
+      proxy_pass http://app;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header Host $host;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+      proxy_set_header X-NginX-Proxy true;
+
+      # WebSocket support
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+      proxy_read_timeout 86400;
+
   }
 }
 
